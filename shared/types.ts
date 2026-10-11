@@ -101,11 +101,20 @@ export type SocialRole = 'admin' | 'moderator';
 
 export type CallCreationPolicy = 'all' | 'founders' | 'staff';
 
+/** Karma-Punkte je Aktion. */
+export interface KarmaRates {
+  callHost: number;
+  callCheckin: number;
+  LEARNING: number;
+  DISCUSS: number;
+  SHOW: number;
+  ASK: number;
+}
+
 export interface SocialSettings {
   enabledTypes: PostType[];
   callCreation: CallCreationPolicy;
-  karmaHost: number;
-  karmaCheckin: number;
+  karma: KarmaRates;
   checkinLeadMin: number;
   /** Beiträge/Kommentare mit diesen Begriffen werden automatisch gemeldet. */
   wordFilter: string[];
@@ -135,7 +144,7 @@ export interface KarmaEvent {
   id: string;
   memberId: string;
   points: number;
-  reason: 'call_hosted' | 'call_checkin';
+  reason: 'call_hosted' | 'call_checkin' | 'post_created';
   postId: string;
   at: string;
 }

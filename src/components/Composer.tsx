@@ -5,11 +5,12 @@ import type { BlockId, GroupSize, PostType, SlotKey } from '../../shared/types';
 import { api } from '../api';
 import { useStore } from '../store';
 import { CalendarWeek } from './Calendar';
-import { Modal } from './ui';
+import { postKarma } from '../../shared/karma';
+import { KarmaHint, Modal } from './ui';
 
 export function Composer({ initialType, onClose }: { initialType: PostType; onClose: () => void }) {
   const { now, run, state, me, isStaff } = useStore();
-  const { enabledTypes, callCreation, karmaHost } = state.settings;
+  const { enabledTypes, callCreation, karma } = state.settings;
   const canCall =
     callCreation === 'all' || isStaff || (callCreation === 'founders' && me.role === 'Founder');
   const allowed = POST_TYPES.filter((t) => enabledTypes.includes(t.id) && (t.id !== 'CALL' || canCall));
@@ -67,7 +68,7 @@ export function Composer({ initialType, onClose }: { initialType: PostType; onCl
               }
             : undefined,
         }),
-      isCall ? `Call veröffentlicht · +${karmaHost} Karma fürs Hosten` : 'Beitrag veröffentlicht',
+      `${isCall ? 'Call' : 'Beitrag'} veröffentlicht · +${postKarma(karma, type)} Karma`,
     );
     if (ok) onClose();
   };
@@ -92,6 +93,7 @@ export function Composer({ initialType, onClose }: { initialType: PostType; onCl
           >
             <strong>{t.prefix}</strong>
             <span>{t.hint}</span>
+            <KarmaHint points={postKarma(karma, t.id)} label={`+${postKarma(karma, t.id)}`} />
           </button>
         ))}
       </div>
@@ -186,6 +188,13 @@ export function Composer({ initialType, onClose }: { initialType: PostType; onCl
       )}
 
       <div className="modal-actions">
+        <span className="karma-earn">
+          <KarmaHint
+            points={postKarma(karma, type)}
+            label={`Hierfür erhältst du +${postKarma(karma, type)} Karma-Punkte`}
+          />
+          {isCall && <span className="muted small">+ {karma.callCheckin} pro Check-in, wenn der Call stattfindet</span>}
+        </span>
         <button type="button" className="btn btn-ghost" onClick={onClose}>
           Abbrechen
         </button>

@@ -19,7 +19,7 @@ import type { Post, SlotKey } from '../../shared/types';
 import { api } from '../api';
 import { useStore } from '../store';
 import { CalendarWeek, MonthPicker } from './Calendar';
-import { MemberAvatar, MemberName, Modal, TypeTag } from './ui';
+import { KarmaHint, MemberAvatar, MemberName, Modal, TypeTag } from './ui';
 
 type CallPost = Post & { call: NonNullable<Post['call']> };
 
@@ -106,7 +106,7 @@ export function CallActions({ post }: { post: CallPost }) {
       apply(res.state);
       if (win) win.location.href = res.meetingLink;
       else window.location.href = res.meetingLink;
-      toast(checkedIn ? 'Weiter zum Meeting …' : `Eingecheckt! +${state.settings.karmaCheckin} Karma`);
+      toast(checkedIn ? 'Weiter zum Meeting …' : `Eingecheckt! +${state.settings.karma.callCheckin} Karma`);
     } catch (e) {
       win?.close();
       toast((e as Error).message, 'error');
@@ -128,6 +128,14 @@ export function CallActions({ post }: { post: CallPost }) {
         {checkedIn ? 'Erneut zum Meeting' : 'Jetzt dem Call beitreten & einchecken'}
       </button>
     );
+    if (!checkedIn) {
+      content = (
+        <>
+          {content}
+          <KarmaHint points={state.settings.karma.callCheckin} />
+        </>
+      );
+    }
   } else if (isHost) {
     content = (
       <span className="muted">
@@ -168,6 +176,12 @@ export function CallActions({ post }: { post: CallPost }) {
         <LogIn size={20} />
         Teilnehmen
       </button>
+    );
+    content = (
+      <>
+        {content}
+        <KarmaHint points={state.settings.karma.callCheckin} label={`+${state.settings.karma.callCheckin} Karma beim Check-in`} />
+      </>
     );
   }
 

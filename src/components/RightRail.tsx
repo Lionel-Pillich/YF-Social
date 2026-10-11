@@ -1,7 +1,8 @@
-import { FastForward, RotateCcw, Trophy } from 'lucide-react';
+import { Award, Coins, FastForward, RotateCcw, Trophy } from 'lucide-react';
 import { callPhase, effectiveSlot, formatSlot, isInCall } from '../../shared/schedule';
 import { api } from '../api';
 import { useStore } from '../store';
+import { KARMA_ITEMS } from '../../shared/karma';
 import { MemberAvatar, MemberName, TypeTag } from './ui';
 
 const DAY = 24 * 60 * 60 * 1000;
@@ -56,7 +57,25 @@ export function RightRail() {
             </li>
           ))}
         </ol>
-        <p className="muted small">+{state.settings.karmaHost} fürs Hosten eines Calls · +{state.settings.karmaCheckin} pro Check-in. Keine Abzüge bei Nichterscheinen.</p>
+        <div className="award">
+          <Award size={28} strokeWidth={1.8} />
+          <div>
+            <strong>YF Social Award</strong>
+            <span>Platz 1 der Rangliste wird einmal im Jahr geehrt und erhält den YF Social Award.</span>
+          </div>
+        </div>
+        <h4 className="karma-how">
+          <Coins size={16} /> So sammelst du Karma
+        </h4>
+        <ul className="karma-rates">
+          {KARMA_ITEMS.map((k, i) => (
+            <li key={k.key} className={i < 2 ? 'is-top' : ''}>
+              <span>{k.short}</span>
+              <strong>+{state.settings.karma[k.key]}</strong>
+            </li>
+          ))}
+        </ul>
+        <p className="muted small">Calls bringen die meisten Punkte, weil sie echte Interaktion im Netzwerk schaffen. Keine Abzüge bei Nichterscheinen.</p>
       </section>
 
       <section className="panel">

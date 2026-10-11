@@ -19,6 +19,7 @@ import type {
   SlotKey,
   SocialSettings,
 } from '../shared/types';
+import { DEFAULT_KARMA } from '../shared/karma';
 import { CURRENT_USER_ID, MEMBERS } from './members';
 
 const HOUR = 60 * 60 * 1000;
@@ -26,8 +27,7 @@ const HOUR = 60 * 60 * 1000;
 export const DEFAULT_SETTINGS: SocialSettings = {
   enabledTypes: ['CALL', 'DISCUSS', 'LEARNING', 'ASK', 'SHOW'],
   callCreation: 'all',
-  karmaHost: 10,
-  karmaCheckin: 5,
+  karma: { ...DEFAULT_KARMA },
   checkinLeadMin: 15,
   wordFilter: ['casino', 'krypto-gewinn', 'gratis follower'],
 };
@@ -256,11 +256,21 @@ export function createSeed(now = new Date()): Database {
 
   const karma: KarmaEvent[] = [];
   for (const post of posts) {
-    if (!post.call) continue;
+    if (!post.call) {
+      karma.push({
+        id: randomUUID(),
+        memberId: post.authorId,
+        points: DEFAULT_KARMA[post.type as Exclude<typeof post.type, 'CALL'>],
+        reason: 'post_created',
+        postId: post.id,
+        at: post.createdAt,
+      });
+      continue;
+    }
     karma.push({
       id: randomUUID(),
       memberId: post.authorId,
-      points: DEFAULT_SETTINGS.karmaHost,
+      points: DEFAULT_KARMA.callHost,
       reason: 'call_hosted',
       postId: post.id,
       at: post.createdAt,
@@ -269,7 +279,7 @@ export function createSeed(now = new Date()): Database {
       karma.push({
         id: randomUUID(),
         memberId,
-        points: DEFAULT_SETTINGS.karmaCheckin,
+        points: DEFAULT_KARMA.callCheckin,
         reason: 'call_checkin',
         postId: post.id,
         at: slotStart(post.call.finalSlot!).toISOString(),
@@ -299,7 +309,7 @@ export function createSeed(now = new Date()): Database {
   ];
 
   return {
-    version: 2,
+    version: 3,
     seededAt: now.toISOString(),
     clockOffsetMs: 0,
     members: MEMBERS,

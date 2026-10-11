@@ -26,6 +26,22 @@ Mit `npm run reset` (oder „Daten zurücksetzen“ in der App) geht es zurück 
 | `server/index.ts` | REST-API |
 | `src/` | UI im Stil der Plattform, nur der Tab „YF Social“ ist aktiv |
 
+## Karma
+
+| Aktion | Karma |
+| --- | --- |
+| Call erstellen & hosten | +20 |
+| An einem Call teilnehmen (Check-in) | +10 |
+| LEARNING-Beitrag | +8 |
+| DISCUSS-Beitrag | +5 |
+| SHOW-YFN-Beitrag | +4 |
+| ASK-YFN-Beitrag | +3 |
+
+Calls bringen die meisten Punkte, weil sie echte Interaktion im Netzwerk schaffen. Keine Abzüge bei Nichterscheinen.
+Karma aus Beiträgen, die die Moderation ausblendet, zählt nicht (Schutz gegen Punkte-Farming).
+Admins können alle Werte unter „YF Social Admin → Einstellungen“ anpassen (`shared/karma.ts` enthält die Standardwerte).
+Platz 1 der Rangliste wird einmal im Jahr mit dem **YF Social Award** geehrt.
+
 ## Meeting-Räume
 
 Beim Erstellen eines Calls ist „Automatisch erstellen“ voreingestellt: Der Server erzeugt einen Jitsi-Meet-Raum

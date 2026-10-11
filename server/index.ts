@@ -29,6 +29,7 @@ import type {
   SocialSettings,
 } from '../shared/types';
 import { getDb, loadDb, now, resetDb, saveDb } from './db';
+import { postKarma } from '../shared/karma';
 import { generateMeetingLink } from './meetings';
 import { CURRENT_USER_ID } from './members';
 
@@ -86,13 +87,14 @@ function notify(memberId: string, kind: Notification['kind'], text: string, post
   });
 }
 
-function addKarma(memberId: string, reason: KarmaEvent['reason'], postId: string) {
+function addKarma(memberId: string, reason: KarmaEvent['reason'], post: Post) {
+  const rates = getDb().settings.karma;
   getDb().karma.push({
     id: randomUUID(),
     memberId,
     reason,
-    postId,
-    points: reason === 'call_hosted' ? getDb().settings.karmaHost : getDb().settings.karmaCheckin,
+    postId: post.id,
+    points: reason === 'call_checkin' ? rates.callCheckin : postKarma(rates, post.type),
     at: now().toISOString(),
   });
 }
@@ -145,7 +147,12 @@ function autoFlag(text: string, postId: string, commentId?: string) {
 function karmaTotals(): Record<string, number> {
   const totals: Record<string, number> = {};
   for (const m of getDb().members) totals[m.id] = 0;
-  for (const e of getDb().karma) totals[e.memberId] = (totals[e.memberId] ?? 0) + e.points;
+  // Karma aus von der Moderation ausgeblendeten Beiträgen zählt nicht.
+  const hidden = new Set(getDb().posts.filter((p) => p.hidden).map((p) => p.id));
+  for (const e of getDb().karma) {
+    if (hidden.has(e.postId)) continue;
+    totals[e.memberId] = (totals[e.memberId] ?? 0) + e.points;
+  }
   return totals;
 }
 
@@ -255,10 +262,10 @@ app.post(
         capacityExpanded: false,
         checkIns: [],
       };
-      addKarma(me, 'call_hosted', post.id);
     }
 
     getDb().posts.push(post);
+    addKarma(me, input.type === 'CALL' ? 'call_hosted' : 'post_created', post);
     autoFlag(`${title} ${body}`, post.id);
     send(res, req);
   }),
@@ -403,7 +410,7 @@ app.post(
         },
       };
       getDb().posts.push(duplicate);
-      addKarma(me, 'call_hosted', duplicate.id);
+      addKarma(me, 'call_hosted', duplicate);
       for (const p of overflow) {
         notify(p.memberId, 'moved', `Du wurdest in die parallele Runde von „${post.title}“ verschoben.`, duplicate.id);
       }
@@ -428,7 +435,7 @@ app.post(
     }
     if (!post.call.checkIns.includes(me)) {
       post.call.checkIns.push(me);
-      addKarma(me, 'call_checkin', post.id);
+      addKarma(me, 'call_checkin', post);
     }
     saveDb();
     res.json({ meetingLink: post.call.meetingLink, state: bootstrap(me) });
@@ -602,8 +609,11 @@ app.post(
       if (!['all', 'founders', 'staff'].includes(input.callCreation)) throw new HttpError(400, 'Ungültige Option');
       s.callCreation = input.callCreation;
     }
-    if (input.karmaHost !== undefined) s.karmaHost = int(input.karmaHost, 0, 100);
-    if (input.karmaCheckin !== undefined) s.karmaCheckin = int(input.karmaCheckin, 0, 100);
+    if (input.karma) {
+      for (const key of Object.keys(s.karma) as (keyof typeof s.karma)[]) {
+        if (input.karma[key] !== undefined) s.karma[key] = int(input.karma[key], 0, 100);
+      }
+    }
     if (input.checkinLeadMin !== undefined) {
       s.checkinLeadMin = int(input.checkinLeadMin, 5, 120);
       setCheckinLead(s.checkinLeadMin);

@@ -257,8 +257,8 @@ h3 {
   display: block;
 }
 
-.avatar[tabindex='-1'] {
-  cursor: default;
+span.avatar {
+  cursor: inherit;
 }
 
 .badge {
@@ -2250,4 +2250,89 @@ textarea.input {
 .link-mode button {
   font-size: 0.95rem;
   padding: 0 16px;
+}
+
+/* ---------- Karma ---------- */
+
+.karma-hint {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: #f5c542;
+  font-size: 0.8rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.type-option .karma-hint {
+  margin-top: 2px;
+}
+
+.karma-earn {
+  margin-right: auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+}
+
+.award {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 16px 0 14px;
+  padding: 12px 14px;
+  border: 1px solid #f5c542;
+  background: linear-gradient(135deg, rgb(245 197 66 / 0.16), rgb(245 197 66 / 0.02));
+  color: #f5c542;
+}
+
+.award div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.award strong {
+  font-weight: 900;
+  letter-spacing: 0.02em;
+}
+
+.award span {
+  color: #e8e0c8;
+  font-size: 0.85rem;
+  line-height: 1.35;
+}
+
+.karma-how {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 8px;
+  font-size: 0.95rem;
+  color: #f5c542;
+}
+
+.karma-rates {
+  list-style: none;
+  margin: 0 0 10px;
+  padding: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.karma-rates li {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #d0d0d0;
+}
+
+.karma-rates li strong {
+  color: #f5c542;
+}
+
+.karma-rates li.is-top {
+  color: #fff;
 }

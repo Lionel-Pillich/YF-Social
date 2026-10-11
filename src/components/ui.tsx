@@ -1,4 +1,4 @@
-import { X } from 'lucide-react';
+import { Coins, X } from 'lucide-react';
 import { useEffect, type ReactNode } from 'react';
 import { POST_TYPES } from '../../shared/schedule';
 import type { Member, PostType } from '../../shared/types';
@@ -10,16 +10,19 @@ export function Avatar({ member, size = 48, onClick }: { member: Member; size?: 
     .map((p) => p[0])
     .slice(0, 2)
     .join('');
+  const style = { width: size, height: size, fontSize: size * 0.36 };
+  const content = member.photo ? <img src={member.photo} alt={member.name} /> : <span>{initials}</span>;
+  // Ohne Klick-Aktion als <span>, damit Avatare auch in Buttons stehen dürfen.
+  if (!onClick) {
+    return (
+      <span className="avatar" style={style} title={member.name}>
+        {content}
+      </span>
+    );
+  }
   return (
-    <button
-      type="button"
-      className="avatar"
-      style={{ width: size, height: size, fontSize: size * 0.36 }}
-      onClick={onClick}
-      title={member.name}
-      tabIndex={onClick ? 0 : -1}
-    >
-      {member.photo ? <img src={member.photo} alt={member.name} /> : <span>{initials}</span>}
+    <button type="button" className="avatar" style={style} onClick={onClick} title={member.name}>
+      {content}
     </button>
   );
 }
@@ -55,6 +58,16 @@ export function StaffBadge({ id }: { id: string }) {
   const role = state.roles[id];
   if (!role) return null;
   return <span className={`staff-badge staff-${role}`}>{role === 'admin' ? 'Admin' : 'Mod'}</span>;
+}
+
+/** Kleiner Karma-Hinweis mit Münzsymbol, z. B. „+20 Karma“. */
+export function KarmaHint({ points, label }: { points: number; label?: string }) {
+  return (
+    <span className="karma-hint" title="Karma-Punkte">
+      <Coins size={14} strokeWidth={2.4} />
+      {label ?? `+${points} Karma`}
+    </span>
+  );
 }
 
 export function TypeTag({ type }: { type: PostType }) {

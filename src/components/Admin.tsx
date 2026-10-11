@@ -24,6 +24,7 @@ import type { CallCreationPolicy, Post, PostType, Report, SocialRole, SocialSett
 import { api } from '../api';
 import { useStore } from '../store';
 import { sizeLabel } from './Call';
+import { KARMA_ITEMS } from '../../shared/karma';
 import { MemberAvatar, MemberName, RoleBadge, StaffBadge, TypeTag, timeAgo } from './ui';
 
 type Tab = 'overview' | 'reports' | 'posts' | 'calls' | 'members' | 'settings' | 'audit';
@@ -481,16 +482,11 @@ function SettingsForm() {
       'Einstellungen gespeichert',
     );
 
-  const num = (key: 'karmaHost' | 'karmaCheckin' | 'checkinLeadMin', label: string, suffix: string) => (
-    <label className="field">
+  const numField = (label: string, value: number, onValue: (n: number) => void, suffix: string) => (
+    <label className="field" key={label}>
       <span>{label}</span>
       <div className="row">
-        <input
-          type="number"
-          className="input input-num"
-          value={draft[key]}
-          onChange={(e) => setDraft((d) => ({ ...d, [key]: Number(e.target.value) }))}
-        />
+        <input type="number" className="input input-num" value={value} onChange={(e) => onValue(Number(e.target.value))} />
         <span className="muted">{suffix}</span>
       </div>
     </label>
@@ -537,9 +533,12 @@ function SettingsForm() {
       <section className="panel">
         <h3>Karma & Check-in</h3>
         <div className="settings-row">
-          {num('karmaHost', 'Karma fürs Hosten eines Calls', 'Punkte')}
-          {num('karmaCheckin', 'Karma pro Check-in', 'Punkte')}
-          {num('checkinLeadMin', 'Check-in öffnet vor Start', 'Minuten')}
+          {KARMA_ITEMS.map((k) =>
+            numField(k.label, draft.karma[k.key], (n) => setDraft((d) => ({ ...d, karma: { ...d.karma, [k.key]: n } })), 'Punkte'),
+          )}
+        </div>
+        <div className="settings-row">
+          {numField('Check-in öffnet vor Start', draft.checkinLeadMin, (n) => setDraft((d) => ({ ...d, checkinLeadMin: n })), 'Minuten')}
         </div>
         <p className="muted small">Änderungen gelten für neue Karma-Vergaben; bereits vergebene Punkte bleiben bestehen.</p>
       </section>
