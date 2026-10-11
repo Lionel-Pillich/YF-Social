@@ -2241,3 +2241,13 @@ textarea.input {
     overflow-x: auto;
   }
 }
+
+.link-mode {
+  align-self: flex-start;
+  height: 46px;
+}
+
+.link-mode button {
+  font-size: 0.95rem;
+  padding: 0 16px;
+}

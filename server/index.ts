@@ -29,6 +29,7 @@ import type {
   SocialSettings,
 } from '../shared/types';
 import { getDb, loadDb, now, resetDb, saveDb } from './db';
+import { generateMeetingLink } from './meetings';
 import { CURRENT_USER_ID } from './members';
 
 const PORT = Number(process.env.API_PORT ?? 3001);
@@ -242,11 +243,13 @@ app.post(
         (s) => allowedDays.has(s.split('|')[0]) && slotStart(s).getTime() > now().getTime(),
       );
       if (slots.length === 0) throw new HttpError(400, 'Bitte Zeitfenster in den kommenden 2 Wochen wählen');
-      const link = String(c.meetingLink ?? '').trim();
-      if (!/^https?:\/\//.test(link)) throw new HttpError(400, 'Bitte einen gültigen Meeting-Link (https://…) angeben');
+      const auto = c.linkMode !== 'custom';
+      const link = auto ? generateMeetingLink(title) : String(c.meetingLink ?? '').trim();
+      if (!/^https:\/\/\S+$/.test(link)) throw new HttpError(400, 'Bitte einen gültigen Meeting-Link (https://…) angeben');
       post.call = {
         groupSize: c.groupSize,
         meetingLink: link,
+        meetingProvider: auto ? 'jitsi' : 'custom',
         hostAvailability: slots,
         participants: [],
         capacityExpanded: false,
@@ -389,7 +392,9 @@ app.post(
         comments: [],
         call: {
           groupSize: post.call.groupSize,
-          meetingLink: post.call.meetingLink,
+          // Automatisch erzeugte Räume bekommen für die parallele Runde einen eigenen Raum.
+          meetingLink: post.call.meetingProvider === 'jitsi' ? generateMeetingLink(post.title) : post.call.meetingLink,
+          meetingProvider: post.call.meetingProvider,
           hostAvailability: [...post.call.hostAvailability],
           participants: overflow,
           capacityExpanded: false,

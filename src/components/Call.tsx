@@ -450,7 +450,8 @@ export function CallModal({ post, onClose }: { post: CallPost; onClose: () => vo
           </ul>
           {isInCall(post, me.id) && (
             <p className="muted small">
-              Meeting-Link: <code>{post.call.meetingLink}</code>
+              {post.call.meetingProvider === 'jitsi' ? 'Jitsi-Raum (automatisch erstellt)' : 'Meeting-Link'}:{' '}
+              <code>{post.call.meetingLink}</code>
             </p>
           )}
         </div>

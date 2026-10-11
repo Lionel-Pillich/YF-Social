@@ -26,6 +26,13 @@ Mit `npm run reset` (oder „Daten zurücksetzen“ in der App) geht es zurück 
 | `server/index.ts` | REST-API |
 | `src/` | UI im Stil der Plattform, nur der Tab „YF Social“ ist aktiv |
 
+## Meeting-Räume
+
+Beim Erstellen eines Calls ist „Automatisch erstellen“ voreingestellt: Der Server erzeugt einen Jitsi-Meet-Raum
+(`server/meetings.ts`) mit lesbarem Namen und zufälligem Suffix, z. B. `https://meet.jit.si/YFN-Fundraising-…-ij0ZToMY`.
+Dafür braucht es weder Konto noch API-Schlüssel, und jede Person mit dem Link kann beitreten.
+Für einen eigenen Jitsi-Server `JITSI_BASE_URL` setzen. Alternativ kann der Host einen eigenen Link einfügen (Zoom, Teams, Meet, …).
+
 ## YF Social Admin
 
 Der Tab „YF Social Admin“ (Sidebar, Bereich „Admin“) ist nur für YF Social Admins und Moderatoren sichtbar.

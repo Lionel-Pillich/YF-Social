@@ -44,6 +44,8 @@ export type BlockId = 'b10' | 'b14' | 'b16' | 'b18' | 'b20';
 /** Ein Slot ist ein Tag + Zeitfenster, serialisiert als `YYYY-MM-DD|bXX`. */
 export type SlotKey = `${string}|${BlockId}`;
 
+export type MeetingProvider = 'jitsi' | 'custom';
+
 export interface CallParticipant {
   memberId: string;
   availability: SlotKey[];
@@ -53,6 +55,8 @@ export interface CallParticipant {
 export interface CallData {
   groupSize: GroupSize;
   meetingLink: string;
+  /** „jitsi“ = automatisch erzeugter Raum, „custom“ = vom Host eingefügter Link. */
+  meetingProvider?: MeetingProvider;
   hostAvailability: SlotKey[];
   participants: CallParticipant[];
   /** Vom Host fixierter Termin. Ohne Fixierung gilt der beste Overlapping Slot. */
@@ -185,7 +189,9 @@ export interface NewPostInput {
   body: string;
   call?: {
     groupSize: GroupSize;
-    meetingLink: string;
+    /** „auto“ erzeugt einen offenen Jitsi-Raum; sonst wird meetingLink verwendet. */
+    linkMode: 'auto' | 'custom';
+    meetingLink?: string;
     hostAvailability: SlotKey[];
   };
 }

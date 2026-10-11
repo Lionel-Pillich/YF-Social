@@ -1,4 +1,4 @@
-import { Lightbulb } from 'lucide-react';
+import { Lightbulb, Link2, Wand2 } from 'lucide-react';
 import { useState } from 'react';
 import { BLOCKS, GROUP_SIZES, POST_TYPES, matrixDays, slotKey, slotStart } from '../../shared/schedule';
 import type { BlockId, GroupSize, PostType, SlotKey } from '../../shared/types';
@@ -20,6 +20,7 @@ export function Composer({ initialType, onClose }: { initialType: PostType; onCl
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
   const [groupSize, setGroupSize] = useState<GroupSize | ''>('');
+  const [linkMode, setLinkMode] = useState<'auto' | 'custom'>('auto');
   const [meetingLink, setMeetingLink] = useState('');
   const [slots, setSlots] = useState(new Set<SlotKey>());
   const [days] = useState(() => matrixDays(now));
@@ -43,7 +44,7 @@ export function Composer({ initialType, onClose }: { initialType: PostType; onCl
   const isCall = type === 'CALL';
   const prefix = POST_TYPES.find((t) => t.id === type)!.prefix;
   const valid =
-    title.trim() && (!isCall || (body.trim() && groupSize && /^https?:\/\/\S+/.test(meetingLink) && slots.size > 0));
+    title.trim() && (!isCall || (body.trim() && groupSize && (linkMode === 'auto' || /^https:\/\/\S+$/.test(meetingLink.trim())) && slots.size > 0));
 
   const submit = async () => {
     // Sanfter Hinweis: Mit wenigen Optionen findet sich selten ein gemeinsamer Termin.
@@ -57,7 +58,14 @@ export function Composer({ initialType, onClose }: { initialType: PostType; onCl
           type,
           title,
           body,
-          call: isCall ? { groupSize: groupSize as GroupSize, meetingLink, hostAvailability: [...slots] } : undefined,
+          call: isCall
+            ? {
+                groupSize: groupSize as GroupSize,
+                linkMode,
+                meetingLink: linkMode === 'custom' ? meetingLink.trim() : undefined,
+                hostAvailability: [...slots],
+              }
+            : undefined,
         }),
       isCall ? `Call veröffentlicht · +${karmaHost} Karma fürs Hosten` : 'Beitrag veröffentlicht',
     );
@@ -117,15 +125,30 @@ export function Composer({ initialType, onClose }: { initialType: PostType; onCl
                 ))}
               </select>
             </label>
-            <label className="field">
-              <span>Meeting-Link (Zoom, Teams, WhatsApp, …)</span>
-              <input
-                className="input"
-                placeholder="https://…"
-                value={meetingLink}
-                onChange={(e) => setMeetingLink(e.target.value)}
-              />
-            </label>
+            <div className="field">
+              <span>Meeting-Raum</span>
+              <div className="segmented link-mode" role="radiogroup">
+                <button type="button" role="radio" aria-checked={linkMode === 'auto'} className={linkMode === 'auto' ? 'on' : ''} onClick={() => setLinkMode('auto')}>
+                  <Wand2 size={16} /> Automatisch erstellen
+                </button>
+                <button type="button" role="radio" aria-checked={linkMode === 'custom'} className={linkMode === 'custom' ? 'on' : ''} onClick={() => setLinkMode('custom')}>
+                  <Link2 size={16} /> Eigener Link
+                </button>
+              </div>
+              {linkMode === 'auto' ? (
+                <span className="muted small">
+                  Beim Veröffentlichen wird ein eigener Jitsi-Meet-Raum erzeugt – ohne Konto, offen für alle mit dem Link.
+                  Er wird den Teilnehmenden beim Check-in geöffnet.
+                </span>
+              ) : (
+                <input
+                  className="input"
+                  placeholder="https://… (Zoom, Teams, Google Meet, WhatsApp, …)"
+                  value={meetingLink}
+                  onChange={(e) => setMeetingLink(e.target.value)}
+                />
+              )}
+            </div>
           </div>
           <div className="field">
             <span>Welche Termine bietest du an? (kommende 2 Wochen)</span>

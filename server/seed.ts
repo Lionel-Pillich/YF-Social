@@ -47,6 +47,7 @@ export function createSeed(now = new Date()): Database {
 
   const call = (data: Partial<CallData> & Pick<CallData, 'groupSize' | 'hostAvailability'>): CallData => ({
     meetingLink: 'https://meet.jit.si/yfn-social-demo',
+    meetingProvider: 'jitsi',
     participants: [],
     capacityExpanded: false,
     checkIns: [],
