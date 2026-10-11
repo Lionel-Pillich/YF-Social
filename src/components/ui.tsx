@@ -10,7 +10,14 @@ export function Avatar({ member, size = 48, onClick }: { member: Member; size?: 
     .map((p) => p[0])
     .slice(0, 2)
     .join('');
-  const style = { width: size, height: size, fontSize: size * 0.36 };
+  // Ohne Foto: Initialen auf einer pro Person stabilen Farbe.
+  const hue = [...member.id].reduce((h, c) => (h * 31 + c.charCodeAt(0)) % 360, 7);
+  const style = {
+    width: size,
+    height: size,
+    fontSize: size * 0.36,
+    ...(member.photo ? {} : { background: `hsl(${hue} 45% 32%)` }),
+  };
   const content = member.photo ? <img src={member.photo} alt={member.name} /> : <span>{initials}</span>;
   // Ohne Klick-Aktion als <span>, damit Avatare auch in Buttons stehen dürfen.
   if (!onClick) {

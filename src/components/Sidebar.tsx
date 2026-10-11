@@ -114,7 +114,7 @@ function SectionLabel({ children }: { children: string }) {
 }
 
 function YfnLogo() {
-  return <img className="logo" src="/yfn-logo.png" alt="YFN" />;
+  return <img className="logo" src={`${import.meta.env.BASE_URL}yfn-logo.png`} alt="YFN" />;
 }
 
 /** Profil-Box unten links. Im Prototyp zum Wechseln der Demo-Perspektive. */

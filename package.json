@@ -9,7 +9,9 @@
     "dev:api": "tsx watch --clear-screen=false server/index.ts",
     "dev:web": "vite",
     "typecheck": "tsc --noEmit",
-    "reset": "rm -f data/db.json && echo 'Datenbank zurückgesetzt – wird beim nächsten Start neu geseedet.'"
+    "reset": "rm -f data/db.json && echo 'Datenbank zurückgesetzt – wird beim nächsten Start neu geseedet.'",
+    "build:pages": "vite build --mode pages",
+    "preview:pages": "vite preview --mode pages"
   },
   "dependencies": {
     "express": "^5.3.0",

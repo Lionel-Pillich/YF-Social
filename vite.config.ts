@@ -1,8 +1,18 @@
 import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
 
-export default defineConfig({
-  plugins: [react()],
+// `vite build --mode pages` erzeugt die statische Demo für GitHub Pages:
+// API im Browser (VITE_LOCAL_API, siehe .env.pages), fiktive Demo-Daten.
+export default defineConfig(({ mode }) => ({
+  plugins: [
+    react(),
+    {
+      name: 'noindex-demo',
+      transformIndexHtml: (html) =>
+        mode === 'pages' ? html.replace('<head>', '<head>\n    <meta name="robots" content="noindex" />') : html,
+    },
+  ],
+  base: mode === 'pages' ? '/YF-Social/' : '/',
   server: {
     port: 5173,
     strictPort: true,
@@ -11,4 +21,4 @@ export default defineConfig({
       '/media': 'http://localhost:3001',
     },
   },
-});
+}));

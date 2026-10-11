@@ -1,30 +1,36 @@
 import type { Bootstrap, NewPostInput, Report, SlotKey, SocialRole, SocialSettings } from '../shared/types';
 
-let userId = (() => {
+/** Gewählte Demo-Perspektive; ohne Wahl liefert die API den Standardnutzer. */
+let userId: string | null = (() => {
   try {
-    return localStorage.getItem('yfs:user') ?? 'lionel-pillich';
+    return localStorage.getItem('yfs:user');
   } catch {
-    return 'lionel-pillich';
+    return null;
   }
 })();
 
-export function getUserId() {
-  return userId;
-}
-
-export function setUserId(id: string) {
+export function setUserId(id: string | null) {
   userId = id;
   try {
-    localStorage.setItem('yfs:user', id);
+    if (id) localStorage.setItem('yfs:user', id);
+    else localStorage.removeItem('yfs:user');
   } catch {
     /* ignore */
   }
 }
 
+/** Statische Demo (GitHub Pages): API läuft komplett im Browser. */
+const LOCAL_API = import.meta.env.VITE_LOCAL_API === '1';
+
 async function request<T>(path: string, body?: unknown): Promise<T> {
+  const method = body === undefined ? 'GET' : 'POST';
+  if (LOCAL_API) {
+    const { localRequest } = await import('./localApi');
+    return localRequest<T>(path, method, body, userId);
+  }
   const res = await fetch(path, {
-    method: body === undefined ? 'GET' : 'POST',
-    headers: { 'Content-Type': 'application/json', 'x-user-id': userId },
+    method,
+    headers: { 'Content-Type': 'application/json', ...(userId ? { 'x-user-id': userId } : {}) },
     body: body === undefined ? undefined : JSON.stringify(body),
   });
   const data = await res.json().catch(() => ({}));

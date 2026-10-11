@@ -53,6 +53,12 @@ export function App() {
     <div className="shell">
       <Sidebar />
       <main className="main">
+        {import.meta.env.VITE_LOCAL_API === '1' && (
+          <div className="demo-banner">
+            <strong>Prototyp</strong> mit fiktiven Demo-Daten. Alles, was du tust, wird nur in deinem Browser gespeichert –
+            zum Zurücksetzen rechts „Daten zurücksetzen“.
+          </div>
+        )}
         {view === 'admin' ? (
           <AdminView />
         ) : (

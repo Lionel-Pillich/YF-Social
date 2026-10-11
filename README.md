@@ -15,6 +15,15 @@ Dann <http://localhost:5173> öffnen. Die API läuft auf Port 3001 (änderbar mi
 Daten liegen in `data/db.json` und werden beim ersten Start aus `server/seed.ts` erzeugt.
 Mit `npm run reset` (oder „Daten zurücksetzen“ in der App) geht es zurück auf den Ausgangszustand.
 
+## Öffentliche Demo (GitHub Pages)
+
+<https://lionel-pillich.github.io/YF-Social/> – statische Version mit **fiktiven Demo-Profilen** (`server/content/demo.ts`).
+Die API (`server/api.ts`) läuft dort komplett im Browser (`src/localApi.ts`), Daten liegen pro Browser im localStorage.
+Jeder Push auf `main` baut und veröffentlicht die Seite über `.github/workflows/pages.yml`.
+Die echten Member-Profile (`server/content/yfn.ts`) gibt es nur lokal mit `npm run dev`.
+
+Lokal testen: `npm run build:pages && npm run preview:pages` → <http://localhost:4173/YF-Social/>
+
 ## Aufbau
 
 | Pfad | Inhalt |
@@ -22,8 +31,8 @@ Mit `npm run reset` (oder „Daten zurücksetzen“ in der App) geht es zurück 
 | `shared/types.ts` | Datenmodell (Member-Profil, Beiträge, Calls, Karma) |
 | `shared/schedule.ts` | Termin-Matrix, Overlapping-Slot-Matching, Call-Status, Check-in-Fenster |
 | `server/members.ts` | Echte Member-Profile aus `member/profile.md` (Bilder: `member/bilder/1–8.png`) |
-| `server/seed.ts` | Beispielbeiträge und Calls, Termine relativ zu „heute“ |
-| `server/index.ts` | REST-API |
+| `server/seed.ts` | Seed-Logik, Termine relativ zu „heute“; Inhalte in `server/content/` (echt/fiktiv) |
+| `server/api.ts` | API-Routen, laufen auf dem Node-Server (`server/index.ts`) und im Browser (`src/localApi.ts`) |
 | `src/` | UI im Stil der Plattform, nur der Tab „YF Social“ ist aktiv |
 
 ## Karma

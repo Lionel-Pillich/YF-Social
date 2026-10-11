@@ -2336,3 +2336,19 @@ textarea.input {
 .karma-rates li.is-top {
   color: #fff;
 }
+
+.demo-banner {
+  margin: -20px 0 24px;
+  padding: 10px 14px;
+  border: 1px dashed var(--ask);
+  color: #f3e3b0;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.demo-banner strong {
+  color: var(--ask);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-right: 4px;
+}

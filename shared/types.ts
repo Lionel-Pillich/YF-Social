@@ -164,6 +164,9 @@ export interface Database {
   seededAt: string;
   /** Demo-Zeitverschiebung in ms (zum Testen des Check-in-Fensters). */
   clockOffsetMs: number;
+  /** Ansicht, wenn keine Perspektive gewählt ist (eingeloggter Nutzer). */
+  defaultUserId: string;
+  totalMembers: number;
   members: Member[];
   posts: Post[];
   karma: KarmaEvent[];
@@ -176,6 +179,8 @@ export interface Database {
 }
 
 export interface Bootstrap {
+  /** Mitglied, aus dessen Sicht die Daten geliefert werden. */
+  viewerId: string;
   serverNow: string;
   clockOffsetMs: number;
   totalMembers: number;

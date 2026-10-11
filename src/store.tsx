@@ -1,7 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { setCheckinLead } from '../shared/schedule';
 import type { Bootstrap, Member, Post, SocialRole } from '../shared/types';
-import { api, getUserId, setUserId } from './api';
+import { api, setUserId } from './api';
 
 interface Store {
   state: Bootstrap;
@@ -77,7 +77,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     api.bootstrap().then(apply, (e: Error) => {
       // Gespeicherter Demo-Nutzer existiert evtl. nicht mehr.
-      setUserId('lionel-pillich');
+      setUserId(null);
       api.bootstrap().then(apply, () => setLoadError(e.message));
     });
     const t = setInterval(() => setTick(Date.now()), 15_000);
@@ -96,10 +96,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     if (!state) return null;
     const members = new Map(state.members.map((m) => [m.id, m]));
     const posts = new Map(state.posts.map((p) => [p.id, p]));
-    const myRole = state.roles[getUserId()];
+    const myRole = state.roles[state.viewerId];
     return {
       state,
-      me: members.get(getUserId())!,
+      me: members.get(state.viewerId)!,
       myRole,
       isStaff: myRole !== undefined,
       // Ohne Rolle gibt es keinen Admin-Bereich.
