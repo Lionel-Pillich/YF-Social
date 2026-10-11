@@ -905,88 +905,419 @@ textarea.input {
   flex-direction: column;
 }
 
-/* ---------- Matrix ---------- */
+/* ---------- Kalender (Google/Apple-ähnlich, YFN-Optik) ---------- */
 
-.matrix-scroll {
-  overflow-x: auto;
+.cal,
+.month {
+  border: 1px solid var(--line-strong);
+  background: #050505;
   margin: 10px 0;
 }
 
-.matrix {
-  border-collapse: separate;
-  border-spacing: 4px;
+.cal-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--line-strong);
 }
 
-.matrix th {
-  font-weight: 700;
-  font-size: 0.8rem;
-  color: var(--muted);
+.cal-toolbar strong {
+  font-size: 1.1rem;
+  font-weight: 900;
 }
 
-.matrix-block {
-  text-align: right;
-  white-space: nowrap;
-  padding-right: 6px;
+.cal-nav {
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 
-.matrix-day {
+.cal-nav .icon-btn {
+  border: 1px solid var(--line-strong);
+}
+
+.cal-nav .icon-btn:disabled {
+  opacity: 0.3;
+}
+
+.cal-grid {
+  --hour: 30px;
+  display: grid;
+  grid-template-columns: 52px repeat(var(--cols), minmax(78px, 1fr));
+  overflow-x: auto;
+}
+
+.cal-corner {
+  border-bottom: 1px solid var(--line-strong);
+}
+
+.cal-head {
   display: flex;
   flex-direction: column;
   align-items: center;
-  width: 100%;
-  font-weight: 700;
-  font-size: 0.75rem;
+  gap: 2px;
+  padding: 8px 0 10px;
+  border-bottom: 1px solid var(--line-strong);
+  border-left: 1px solid var(--line);
+}
+
+.cal-head span {
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
   color: var(--muted);
 }
 
-.matrix-day span {
+.cal-head strong {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  font-size: 1.25rem;
+  font-weight: 900;
+}
+
+.cal-head.is-today span {
   color: #fff;
+}
+
+.cal-head.is-today strong {
+  background: #fff;
+  color: #000;
+}
+
+.cal-head:not(:disabled):hover strong {
+  outline: 2px solid var(--line-strong);
+}
+
+.cal-head:disabled {
+  cursor: default;
+}
+
+.cal-times {
+  position: relative;
+  height: calc(12 * var(--hour));
+}
+
+.cal-times span {
+  position: absolute;
+  right: 8px;
+  transform: translateY(-50%);
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.cal-times span:first-child {
+  transform: none;
+}
+
+.cal-col {
+  position: relative;
+  height: calc(12 * var(--hour));
+  border-left: 1px solid var(--line);
+  background-image: repeating-linear-gradient(
+    to bottom,
+    var(--line) 0 1px,
+    transparent 1px var(--hour)
+  );
+}
+
+.cal-col.is-weekend {
+  background-color: #0b0b0b;
+}
+
+.cal-event {
+  position: absolute;
+  left: 4px;
+  right: 4px;
+  height: calc(2 * var(--hour) - 4px);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+  gap: 2px;
+  padding: 5px 7px;
+  overflow: hidden;
+  border-radius: 4px;
+  border: 1px dashed #5a5a5a;
+  background: rgb(255 255 255 / 0.04);
+  color: #cfcfcf;
+  text-align: left;
+  font-size: 0.75rem;
+  line-height: 1.15;
+  transition: background 0.1s, border-color 0.1s;
+}
+
+.cal-event:not(:disabled):not(.is-on):hover {
+  border-style: solid;
+  border-color: #fff;
+  background: #222;
+}
+
+.cal-event.is-on:not(:disabled):hover {
+  background: #e6e6e6;
+}
+
+.cal-event-time {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  font-weight: 900;
+}
+
+.cal-event-count {
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.cal-heat {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: 3px;
+  width: calc(var(--heat) * 100%);
+  background: var(--call);
+}
+
+.cal-event.is-on {
+  background: #fff;
+  border: 1px solid #fff;
+  border-left: 4px solid var(--call);
+  color: #000;
+}
+
+.cal-event.is-on .cal-event-count {
+  color: #444;
+}
+
+.cal-event.is-static {
+  cursor: default;
+  border-style: solid;
+  border-color: rgb(232 69 124 / 0.5);
+  background: rgb(232 69 124 / calc(0.08 + var(--heat) * 0.6));
+}
+
+.cal-event.is-static .cal-event-count {
+  color: #eee;
+}
+
+.cal-event.is-static.is-on {
+  background: #fff;
+  color: #000;
+}
+
+.cal-event.is-past {
+  opacity: 0.35;
+}
+
+.cal-event.is-best {
+  box-shadow: 0 0 0 2px var(--show);
+}
+
+.cal-best {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 1px 4px;
+  background: var(--show);
+  color: #000;
+  font-size: 0.62rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  border-radius: 2px;
+}
+
+/* Monatsauswahl (Schritt 1) */
+
+.month-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 6px;
+  padding: 12px 14px 14px;
+}
+
+.month-wd {
+  text-align: center;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  padding-bottom: 4px;
+}
+
+.month-day {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  min-height: 64px;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  color: #444;
+}
+
+.month-day strong {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  font-size: 1.15rem;
+  font-weight: 900;
+}
+
+.month-day.is-today strong {
+  outline: 2px solid #fff;
+}
+
+.month-day.is-open {
+  color: #fff;
+  border: 1px dashed #6a6a6a;
+  background: #141414;
+}
+
+.month-day.is-open:hover {
+  border-style: solid;
+  border-color: #fff;
+}
+
+.month-day.is-on {
+  background: #fff;
+  color: #000;
+  border: 1px solid #fff;
+}
+
+.month-day:disabled {
+  cursor: default;
+}
+
+.month-info {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.month-day.is-on .month-info {
+  color: #444;
+}
+
+/* Stepper, Fortschritt, Schnellauswahl */
+
+.stepper {
+  display: flex;
+  gap: 24px;
+  list-style: none;
+  padding: 0;
+  margin: 4px 0 14px;
+}
+
+.stepper li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 800;
+  color: var(--muted);
+}
+
+.stepper li span {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 2px solid var(--line-strong);
+  font-size: 0.85rem;
+}
+
+.stepper li.on {
+  color: #fff;
+}
+
+.stepper li.on span {
+  background: #fff;
+  border-color: #fff;
+  color: #000;
+}
+
+.stepper li.done span {
+  background: var(--show);
+  border-color: var(--show);
+  color: #000;
+}
+
+.meter {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 14px;
+  border: 1px solid var(--line-strong);
+  font-weight: 600;
+}
+
+.meter-bar {
+  display: flex;
+  gap: 4px;
+}
+
+.meter-bar i {
+  width: 22px;
+  height: 8px;
+  background: #2a2a2a;
+}
+
+.meter-1 .meter-bar i.on {
+  background: var(--danger);
+}
+.meter-2 .meter-bar i.on {
+  background: var(--ask);
+}
+.meter-3 .meter-bar i.on,
+.meter-4 .meter-bar i.on {
+  background: var(--show);
+}
+
+.meter-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 0.9rem;
+}
+
+.meter-text span {
+  color: var(--muted);
+}
+
+.presets {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.chip-btn {
+  padding: 5px 11px;
+  border: 1px solid var(--line-strong);
   font-size: 0.85rem;
   font-weight: 800;
 }
 
-.matrix-day:disabled {
-  cursor: default;
-}
-
-.cell {
-  width: 46px;
-  height: 36px;
-  border: 1px solid #6a6a6a;
-  background: #262626;
-  font-weight: 900;
-  font-size: 0.95rem;
-}
-
-.cell:hover:not(:disabled) {
+.chip-btn:hover {
   border-color: #fff;
 }
 
-.cell-on {
-  background: #fff;
-  color: #000;
-  border-color: #fff;
-}
-
-.cell-off {
-  background: repeating-linear-gradient(135deg, #080808 0 4px, #121212 4px 8px);
-  border-color: #1a1a1a;
-  color: #555;
-}
-
-.matrix-readonly .cell {
-  cursor: default;
-}
-
-.matrix-readonly .cell-on {
-  background: rgb(232 69 124 / calc(0.15 + var(--heat, 0) * 0.85));
-  border-color: rgb(232 69 124 / 0.6);
-  color: #fff;
-}
-
-.cell-best {
-  outline: 3px solid var(--show);
-  outline-offset: 1px;
+.chip-btn-ghost {
+  color: var(--muted);
+  border-style: dashed;
 }
 
 /* ---------- Right rail ---------- */
@@ -1281,7 +1612,7 @@ textarea.input {
 
 .detail-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 300px;
+  grid-template-columns: minmax(0, 1fr) 280px;
   gap: 28px;
   margin: 10px 0 18px;
 }

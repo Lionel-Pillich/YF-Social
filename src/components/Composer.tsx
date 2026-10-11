@@ -1,9 +1,10 @@
+import { Lightbulb } from 'lucide-react';
 import { useState } from 'react';
-import { GROUP_SIZES, POST_TYPES, matrixDays } from '../../shared/schedule';
-import type { GroupSize, PostType, SlotKey } from '../../shared/types';
+import { BLOCKS, GROUP_SIZES, POST_TYPES, matrixDays, slotKey, slotStart } from '../../shared/schedule';
+import type { BlockId, GroupSize, PostType, SlotKey } from '../../shared/types';
 import { api } from '../api';
 import { useStore } from '../store';
-import { AvailabilityMatrix } from './AvailabilityMatrix';
+import { CalendarWeek } from './Calendar';
 import { Modal } from './ui';
 
 export function Composer({ initialType, onClose }: { initialType: PostType; onClose: () => void }) {
@@ -22,6 +23,22 @@ export function Composer({ initialType, onClose }: { initialType: PostType; onCl
   const [meetingLink, setMeetingLink] = useState('');
   const [slots, setSlots] = useState(new Set<SlotKey>());
   const [days] = useState(() => matrixDays(now));
+  const [confirmFew, setConfirmFew] = useState(false);
+  const dayCount = new Set([...slots].map((s) => s.split('|')[0])).size;
+
+  /** Schnellauswahl: fügt alle zukünftigen Slots der gewählten Zeitfenster hinzu. */
+  const preset = (blocks: BlockId[], weekdaysOnly = false) => {
+    const next = new Set(slots);
+    for (const day of days) {
+      const wd = new Date(`${day}T12:00:00`).getDay();
+      if (weekdaysOnly && (wd === 0 || wd === 6)) continue;
+      for (const b of blocks) {
+        const s = slotKey(day, b);
+        if (slotStart(s).getTime() > now.getTime()) next.add(s);
+      }
+    }
+    setSlots(next);
+  };
 
   const isCall = type === 'CALL';
   const prefix = POST_TYPES.find((t) => t.id === type)!.prefix;
@@ -29,6 +46,11 @@ export function Composer({ initialType, onClose }: { initialType: PostType; onCl
     title.trim() && (!isCall || (body.trim() && groupSize && /^https?:\/\/\S+/.test(meetingLink) && slots.size > 0));
 
   const submit = async () => {
+    // Sanfter Hinweis: Mit wenigen Optionen findet sich selten ein gemeinsamer Termin.
+    if (isCall && slots.size < FEW_SLOTS && !confirmFew) {
+      setConfirmFew(true);
+      return;
+    }
     const ok = await run(
       () =>
         api.createPost({
@@ -106,10 +128,37 @@ export function Composer({ initialType, onClose }: { initialType: PostType; onCl
             </label>
           </div>
           <div className="field">
-            <span>Deine Verfügbarkeit in den kommenden 2 Wochen · {slots.size} Zeitfenster gewählt</span>
-            <AvailabilityMatrix days={days} selected={slots} onChange={setSlots} now={now} />
-            <span className="muted small">Tipp: Klick auf einen Tag wählt alle Zeitfenster des Tages.</span>
+            <span>Welche Termine bietest du an? (kommende 2 Wochen)</span>
+            <OptionMeter slots={slots.size} days={dayCount} />
+            <div className="presets">
+              <span className="muted small">Schnellauswahl:</span>
+              <button type="button" className="chip-btn" onClick={() => preset(['b18', 'b20'])}>
+                Alle Abende
+              </button>
+              <button type="button" className="chip-btn" onClick={() => preset(['b14', 'b16'], true)}>
+                Werktags nachmittags
+              </button>
+              <button type="button" className="chip-btn" onClick={() => preset(BLOCKS.map((b) => b.id), true)}>
+                Alle Werktage
+              </button>
+              {slots.size > 0 && (
+                <button type="button" className="chip-btn chip-btn-ghost" onClick={() => setSlots(new Set())}>
+                  Auswahl leeren
+                </button>
+              )}
+            </div>
+            <CalendarWeek days={days} selected={slots} onChange={(s) => (setSlots(s), setConfirmFew(false))} now={now} />
+            <span className="muted small">Tipp: Klick auf einen Wochentag im Kopf wählt alle Zeitfenster des Tages.</span>
           </div>
+          {confirmFew && (
+            <div className="notice notice-warn">
+              <Lightbulb size={18} />
+              <div>
+                <strong>Nur {slots.size} {slots.size === 1 ? 'Terminoption' : 'Terminoptionen'}?</strong> Mit mehr Optionen
+                ist die Chance viel größer, dass alle einen gemeinsamen Termin finden. Du kannst trotzdem so veröffentlichen.
+              </div>
+            </div>
+          )}
         </>
       )}
 
@@ -118,9 +167,41 @@ export function Composer({ initialType, onClose }: { initialType: PostType; onCl
           Abbrechen
         </button>
         <button type="button" className="btn btn-primary" disabled={!valid || muted} onClick={submit}>
-          Veröffentlichen
+          {confirmFew ? 'Trotzdem veröffentlichen' : 'Veröffentlichen'}
         </button>
       </div>
     </Modal>
+  );
+}
+
+const FEW_SLOTS = 4;
+const GOOD_SLOTS = 8;
+const GOOD_DAYS = 4;
+
+/** Ermutigt den Host, möglichst viele Terminoptionen anzubieten. */
+function OptionMeter({ slots, days }: { slots: number; days: number }) {
+  const level =
+    slots === 0 ? 0 : slots < FEW_SLOTS ? 1 : slots < GOOD_SLOTS || days < GOOD_DAYS ? 2 : slots < 12 ? 3 : 4;
+  const text = [
+    `Wähle Zeitfenster im Kalender. Empfehlung: mindestens ${GOOD_SLOTS} Optionen an ${GOOD_DAYS} verschiedenen Tagen.`,
+    'Sehr wenige Optionen – ein gemeinsamer Termin ist unwahrscheinlich. Füge weitere hinzu!',
+    `Guter Anfang. Mit ${GOOD_SLOTS}+ Optionen an ${GOOD_DAYS}+ Tagen steigen die Chancen deutlich.`,
+    'Sehr gut – viele Teilnehmende werden einen passenden Termin finden.',
+    'Hervorragend! Damit findet das System fast sicher einen Schnitttermin.',
+  ][level];
+  return (
+    <div className={`meter meter-${level}`}>
+      <div className="meter-bar">
+        {[1, 2, 3, 4].map((i) => (
+          <i key={i} className={i <= level ? 'on' : ''} />
+        ))}
+      </div>
+      <div className="meter-text">
+        <strong>
+          {slots} {slots === 1 ? 'Option' : 'Optionen'} · {days} {days === 1 ? 'Tag' : 'Tage'}
+        </strong>
+        <span>{text}</span>
+      </div>
+    </div>
   );
 }

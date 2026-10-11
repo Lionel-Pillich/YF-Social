@@ -1,4 +1,4 @@
-import { CalendarCheck, Check, Copy, Expand, FastForward, LogIn, TriangleAlert, Unlock, Video } from 'lucide-react';
+import { ArrowLeft, ArrowRight, CalendarCheck, Check, Copy, Expand, FastForward, LogIn, TriangleAlert, Unlock, Video } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import {
   CHECKIN_LEAD_MS,
@@ -18,7 +18,7 @@ import {
 import type { Post, SlotKey } from '../../shared/types';
 import { api } from '../api';
 import { useStore } from '../store';
-import { AvailabilityMatrix } from './AvailabilityMatrix';
+import { CalendarWeek, MonthPicker } from './Calendar';
 import { MemberAvatar, MemberName, Modal, TypeTag } from './ui';
 
 type CallPost = Post & { call: NonNullable<Post['call']> };
@@ -80,7 +80,7 @@ export function CallSummary({ post }: { post: CallPost }) {
           <MemberAvatar key={p.memberId} id={p.memberId} size={34} />
         ))}
         <button type="button" className="link-btn" onClick={() => openCall(post.id)}>
-          Details & Termin-Matrix
+          Details & Termine
         </button>
       </div>
       <CallActions post={post} />
@@ -166,7 +166,7 @@ export function CallActions({ post }: { post: CallPost }) {
     content = (
       <button type="button" className="btn btn-primary" onClick={() => setJoining(true)}>
         <LogIn size={20} />
-        An diesem Call verbindlich teilnehmen
+        Teilnehmen
       </button>
     );
   }
@@ -188,50 +188,124 @@ function countdown(ms: number): string {
   return `in ${Math.round(h / 24)} Tagen`;
 }
 
-/** Modal für Beitretende: eigene Verfügbarkeit in der Termin-Matrix des Hosts angeben. */
+/**
+ * Anmeldung in zwei Schritten: erst Tage, dann Uhrzeiten. Angezeigt werden
+ * exakt die vom Host angebotenen Termine – inkl. bisheriger Zusagen je Slot.
+ */
 function JoinModal({ post, onClose }: { post: CallPost; onClose: () => void }) {
   const { me, now, run, member } = useStore();
   const existing = post.call.participants.find((p) => p.memberId === me.id);
+  const [step, setStep] = useState<1 | 2>(1);
   const [selected, setSelected] = useState(new Set<SlotKey>(existing?.availability ?? []));
   const overbook = !existing && headcount(post) >= capacity(post.call);
 
+  const offered = useMemo(
+    () => post.call.hostAvailability.filter((s) => slotStart(s).getTime() > now.getTime()),
+    [post.call.hostAvailability, now],
+  );
+  const offeredSet = useMemo(() => new Set(offered), [offered]);
+  // Zusagen der anderen (Host + übrige Teilnehmende), ohne die eigene alte Angabe.
+  const others = useMemo(
+    () => ({ ...post.call, participants: post.call.participants.filter((p) => p.memberId !== me.id) }),
+    [post.call, me.id],
+  );
+  const counts = useMemo(() => slotCounts(others), [others]);
+  const othersTotal = 1 + others.participants.length;
+  const best = bestSlot(others, now)?.slot ?? null;
+
+  const offeredDays = useMemo(() => new Set(offered.map((s) => s.split('|')[0])), [offered]);
+  const [days, setDays] = useState(
+    () => new Set([...selected].map((s) => s.split('|')[0]).filter((d) => offeredDays.has(d))),
+  );
+  const dayInfo = useMemo(() => {
+    const info = new Map<string, { slots: number; votes: number }>();
+    for (const s of offered) {
+      const d = s.split('|')[0];
+      const cur = info.get(d) ?? { slots: 0, votes: 0 };
+      cur.slots += 1;
+      cur.votes = Math.max(cur.votes, (counts.get(s) ?? 1) - 1);
+      info.set(d, cur);
+    }
+    return info;
+  }, [offered, counts]);
+
+  const visibleSelection = [...selected].filter((s) => days.has(s.split('|')[0]) && offeredSet.has(s));
+
   const submit = async () => {
     const ok = await run(
-      () => api.join(post.id, [...selected]),
-      existing ? 'Verfügbarkeit aktualisiert' : 'Du nimmst verbindlich teil!',
+      () => api.join(post.id, visibleSelection),
+      existing ? 'Verfügbarkeit aktualisiert' : 'Du bist verbindlich angemeldet!',
     );
     if (ok) onClose();
   };
 
   return (
-    <Modal title="Deine Verfügbarkeit" onClose={onClose} wide>
+    <Modal title={existing ? 'Verfügbarkeit ändern' : 'Am Call teilnehmen'} onClose={onClose} wide>
       <p className="modal-lead">
         <TypeTag type="CALL" /> <strong>{post.title}</strong> mit {member(post.authorId)?.name}
       </p>
-      <p className="muted">
-        Wähle alle Zeitfenster, in denen du kannst. Markiert sind nur die Slots, die der Host angeboten hat – das System
-        berechnet daraus den Termin mit den meisten Übereinstimmungen.
-      </p>
+      <ol className="stepper">
+        <li className={step === 1 ? 'on' : 'done'}>
+          <span>{step === 2 ? <Check size={14} strokeWidth={3} /> : 1}</span> Tage wählen
+        </li>
+        <li className={step === 2 ? 'on' : ''}>
+          <span>2</span> Uhrzeiten wählen
+        </li>
+      </ol>
       {overbook && (
         <div className="notice notice-warn">
           <TriangleAlert size={18} /> Dieser Call ist bereits voll. Du kannst dich trotzdem anmelden – der Host entscheidet,
           ob der Call erweitert oder dupliziert wird.
         </div>
       )}
-      <AvailabilityMatrix
-        days={hostDays(post)}
-        allowed={new Set(post.call.hostAvailability)}
-        selected={selected}
-        onChange={setSelected}
-        now={now}
-      />
+
+      {step === 1 ? (
+        <>
+          <p className="muted">
+            An welchen Tagen könntest du? Auswählbar sind alle Tage, die {member(post.authorId)?.name.split(' ')[0]}{' '}
+            angeboten hat.
+          </p>
+          <MonthPicker available={offeredDays} selected={days} onChange={setDays} info={dayInfo} now={now} />
+        </>
+      ) : (
+        <>
+          <p className="muted">
+            Wähle alle Uhrzeiten, die für dich passen – je mehr, desto besser. Die Zahl zeigt, wie viele bereits zugesagt
+            haben; der beliebteste Termin ist mit „Top“ markiert.
+          </p>
+          <CalendarWeek
+            days={[...days].sort()}
+            offered={offeredSet}
+            selected={selected}
+            onChange={setSelected}
+            counts={counts}
+            total={othersTotal}
+            best={best}
+            now={now}
+          />
+        </>
+      )}
+
       <div className="modal-actions">
-        <button type="button" className="btn btn-ghost" onClick={onClose}>
-          Abbrechen
-        </button>
-        <button type="button" className="btn btn-primary" disabled={selected.size === 0} onClick={submit}>
-          {existing ? 'Speichern' : 'Verbindlich teilnehmen'}
-        </button>
+        {step === 1 ? (
+          <>
+            <button type="button" className="btn btn-ghost" onClick={onClose}>
+              Abbrechen
+            </button>
+            <button type="button" className="btn btn-primary" disabled={days.size === 0} onClick={() => setStep(2)}>
+              Weiter zu den Uhrzeiten <ArrowRight size={18} />
+            </button>
+          </>
+        ) : (
+          <>
+            <button type="button" className="btn btn-ghost" onClick={() => setStep(1)}>
+              <ArrowLeft size={18} /> Tage ändern
+            </button>
+            <button type="button" className="btn btn-primary" disabled={visibleSelection.length === 0} onClick={submit}>
+              {existing ? 'Verfügbarkeit speichern' : 'Jetzt verbindlich für den Call anmelden'}
+            </button>
+          </>
+        )}
       </div>
     </Modal>
   );
@@ -303,14 +377,14 @@ export function CallModal({ post, onClose }: { post: CallPost; onClose: () => vo
 
       <div className="detail-grid">
         <div>
-          <h3>Termin-Matrix · Zusagen je Slot</h3>
-          <AvailabilityMatrix
+          <h3>Angebotene Termine · Zusagen je Slot</h3>
+          <CalendarWeek
             days={hostDays(post)}
-            allowed={new Set(post.call.hostAvailability)}
-            selected={new Set(post.call.hostAvailability)}
+            offered={new Set(post.call.hostAvailability)}
+            selected={post.call.finalSlot ? new Set([post.call.finalSlot]) : new Set()}
             counts={counts}
-            maxCount={headcount(post)}
-            highlight={slot}
+            total={headcount(post)}
+            best={slot}
             now={now}
           />
           <p className="muted small">
